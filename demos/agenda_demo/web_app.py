@@ -1,4 +1,6 @@
+import os
 from datetime import datetime
+from pathlib import Path
 from typing import List, Dict
 
 from anthropic import Anthropic
@@ -8,10 +10,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from demos.agenda_demo.managers import TaskManager
-from models import Task
+from demos.agenda_demo.models import Task
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = BASE_DIR / "templates"
+templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 # Initialize TaskManager
 task_manager = TaskManager()

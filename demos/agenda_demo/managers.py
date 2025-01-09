@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import List
 
-from rich import Console, box
+from rich import box
+from rich.console import Console
 from rich.table import Table
 
 from demos.agenda_demo.models import TrelloImporter, GoogleCalendarImporter, Task
