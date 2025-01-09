@@ -1,20 +1,30 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
-import uvicorn
-from typing import List, Dict, Optional
 from datetime import datetime
+from typing import List, Dict
 
-# Import our task manager system
-from task_importer import TaskManager, Task  # Assuming previous code is in task_importer.py
+from anthropic import Anthropic
+from fastapi import FastAPI, Request, HTTPException
+from fastapi import Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+from demos.agenda_demo.managers import TaskManager
+from models import Task
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # Initialize TaskManager
 task_manager = TaskManager()
+
+# Initialize Anthropic client
+anthropic = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+# Default summarization prompt
+DEFAULT_PROMPT = """Please analyze these tasks and provide:
+1. A high-level summary of the main areas of work
+2. Key deadlines and important dates
+3. Any potential bottlenecks or overlapping commitments
+4. Suggested priority order based on deadlines and dependencies"""
 
 
 # Store tasks in memory (in a real app, you'd want a database)
@@ -98,3 +108,61 @@ async def clear_tasks(request: Request):
         "components/task_table.html",
         {"request": request, "tasks": []}
     )
+
+
+@app.post("/summarize", response_class=HTMLResponse)
+async def summarize_tasks(
+        request: Request,
+        prompt: str = Form(DEFAULT_PROMPT)
+):
+    if not state.tasks:
+        return templates.TemplateResponse(
+            "components/summary.html",
+            {
+                "request": request,
+                "summary": "No tasks available to summarize",
+                "error": True
+            }
+        )
+
+    try:
+        # Prepare tasks data for the prompt
+        tasks_text = "\n".join([
+            f"- {task.title} (Due: {task.due_date.strftime('%Y-%m-%d %H:%M') if task.due_date else 'No due date'}, "
+            f"Status: {task.status}, Source: {task.source}, "
+            f"Assignees: {', '.join(task.assignees) if task.assignees else 'None'})"
+            for task in state.tasks
+        ])
+
+        # Create the full prompt
+        full_prompt = f"{prompt}\n\nTasks:\n{tasks_text}"
+
+        # Get summary from Claude
+        response = await anthropic.messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=1500,
+            messages=[{
+                "role": "user",
+                "content": full_prompt
+            }]
+        )
+
+        summary = response.content[0].text
+
+        return templates.TemplateResponse(
+            "components/summary.html",
+            {
+                "request": request,
+                "summary": summary,
+                "error": False
+            }
+        )
+    except Exception as e:
+        return templates.TemplateResponse(
+            "components/summary.html",
+            {
+                "request": request,
+                "summary": f"Error generating summary: {str(e)}",
+                "error": True
+            }
+        )

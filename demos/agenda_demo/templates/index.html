@@ -9,125 +9,168 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen p-8">
-<div class="max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold mb-8 text-gray-800">Task Manager</h1>
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">Task Manager</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <!-- Trello Section -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4 text-blue-600">Trello Boards</h2>
-            <button
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Trello Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-blue-600">Trello Boards</h2>
+                <button
                     class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                     hx-get="/sources/trello"
                     hx-target="#trello-sources"
                     hx-indicator="#trello-loader">
-                Load Boards
-            </button>
-            <div id="trello-loader" class="htmx-indicator">
-                Loading...
+                    Load Boards
+                </button>
+                <div id="trello-loader" class="htmx-indicator">
+                    Loading...
+                </div>
+                <div id="trello-sources" class="mt-4"></div>
             </div>
-            <div id="trello-sources" class="mt-4"></div>
-        </div>
 
-        <!-- Google Calendar Section -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4 text-green-600">Google Calendars</h2>
-            <button
+            <!-- Google Calendar Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-green-600">Google Calendars</h2>
+                <button
                     class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
                     hx-get="/sources/gcal"
                     hx-target="#gcal-sources"
                     hx-indicator="#gcal-loader">
-                Load Calendars
-            </button>
-            <div id="gcal-loader" class="htmx-indicator">
-                Loading...
+                    Load Calendars
+                </button>
+                <div id="gcal-loader" class="htmx-indicator">
+                    Loading...
+                </div>
+                <div id="gcal-sources" class="mt-4"></div>
             </div>
-            <div id="gcal-sources" class="mt-4"></div>
         </div>
-    </div>
 
-    <!-- Task List Section -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">All Tasks</h2>
-            <button
+        <!-- Task List Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">All Tasks</h2>
+                <button
                     class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                     hx-post="/clear-tasks"
                     hx-target="#task-list">
-                Clear All
-            </button>
+                    Clear All
+                </button>
+            </div>
+            <div id="task-list" class="mt-4">
+                <!-- Tasks will be loaded here -->
+            </div>
         </div>
-        <div id="task-list" class="mt-4">
-            <!-- Tasks will be loaded here -->
+
+        <!-- Task Summary Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Task Summary</h2>
+            </div>
+            <form
+                hx-post="/summarize"
+                hx-target="#summary-result"
+                class="space-y-4">
+                <div>
+                    <label for="prompt" class="block text-sm font-medium text-gray-700">Customization Prompt</label>
+                    <textarea
+                        id="prompt"
+                        name="prompt"
+                        rows="4"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >Please analyze these tasks and provide:
+1. A high-level summary of the main areas of work
+2. Key deadlines and important dates
+3. Any potential bottlenecks or overlapping commitments
+4. Suggested priority order based on deadlines and dependencies</textarea>
+                </div>
+                <div>
+                    <button
+                        type="submit"
+                        class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
+                        hx-indicator="#summary-loader">
+                        Generate Summary
+                    </button>
+                    <div id="summary-loader" class="htmx-indicator">
+                        Generating summary...
+                    </div>
+                </div>
+            </form>
+            <div id="summary-result" class="mt-4">
+                <!-- Summary will be loaded here -->
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>
 
 # templates/components/source_list.html
 <div class="space-y-2">
     {% for source in sources %}
-        <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-            <button
-                    class="text-sm bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600"
-                    hx-post="/import/{{ importer_name }}/{{ source.id }}"
-                    hx-target="#task-list"
-                    hx-indicator="#import-loader-{{ source.id }}">
-                Import
-            </button>
-            <span class="text-gray-700">{{ source.name }}</span>
-            <div id="import-loader-{{ source.id }}" class="htmx-indicator">
-                Importing...
-            </div>
+    <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+        <button
+            class="text-sm bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600"
+            hx-post="/import/{{ importer_name }}/{{ source.id }}"
+            hx-target="#task-list"
+            hx-indicator="#import-loader-{{ source.id }}">
+            Import
+        </button>
+        <span class="text-gray-700">{{ source.name }}</span>
+        <div id="import-loader-{{ source.id }}" class="htmx-indicator">
+            Importing...
         </div>
+    </div>
     {% endfor %}
 </div>
 
 # templates/components/task_table.html
 {% if tasks %}
-    <div class="overflow-x-auto">
-        <table class="min-w-full table-auto">
-            <thead class="bg-gray-50">
+<div class="overflow-x-auto">
+    <table class="min-w-full table-auto">
+        <thead class="bg-gray-50">
             <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignees
-                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignees</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Labels</th>
             </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
             {% for task in tasks %}
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.source }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.status }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% if task.due_date %}
-                            {{ task.due_date.strftime("%Y-%m-%d %H:%M") }}
-                        {% else %}
-                            No due date
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ task.assignees|join(", ") or "None" }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ task.labels|join(", ") or "None" }}
-                    </td>
-                </tr>
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.source }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.status }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {% if task.due_date %}
+                        {{ task.due_date.strftime("%Y-%m-%d %H:%M") }}
+                    {% else %}
+                        No due date
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ task.assignees|join(", ") or "None" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ task.labels|join(", ") or "None" }}
+                </td>
+            </tr>
             {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        </tbody>
+    </table>
+</div>
 {% else %}
-    <div class="text-center text-gray-500 py-8">
-        No tasks imported yet
-    </div>
+<div class="text-center text-gray-500 py-8">
+    No tasks imported yet
+</div>
 {% endif %}
+
+# templates/components/summary.html
+<div class="mt-4 {% if error %}bg-red-50 text-red-800{% else %}bg-green-50 text-gray-800{% endif %} rounded-lg p-4">
+    <pre class="whitespace-pre-wrap font-sans">{{ summary }}</pre>
+</div>
 
 # templates/components/error.html
 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
