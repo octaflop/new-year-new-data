@@ -1,3 +1,5 @@
+![img.png](img.png)
+
 # Get started:
 
 After cloning, and with python 3.12 installed, run this
