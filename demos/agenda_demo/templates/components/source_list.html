@@ -1,0 +1,17 @@
+<div class="space-y-2">
+    {% for source in sources %}
+    <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+        <button
+            class="text-sm bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600"
+            hx-post="/import/{{ importer_name }}/{{ source.id }}"
+            hx-target="#task-list"
+            hx-indicator="#import-loader-{{ source.id }}">
+            Import
+        </button>
+        <span class="text-gray-700">{{ source.name }}</span>
+        <div id="import-loader-{{ source.id }}" class="htmx-indicator">
+            Importing...
+        </div>
+    </div>
+    {% endfor %}
+</div>
